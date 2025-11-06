@@ -1,165 +1,166 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SafeTravel — Routes</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DATS — Routes</title>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><text y=%2224%22 font-size=%2232%22>☁️</text></svg>">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link href="assets/css/app.css" rel="stylesheet">
+  <style>
+    #routeMap { height: 450px; border-radius:10px; margin-top:20px; }
+    .badge-safe { background-color: #28a745; color: #fff; }
+    .badge-moderate { background-color: #ffc107; color: #000; }
+    .badge-risk { background-color: #dc3545; color: #fff; }
+    .route-card:hover { transform: scale(1.02); transition:0.2s; cursor:pointer; }
+  </style>
 </head>
-<body class="app-bg">
-  <div class="app-layout">
-    <aside class="app-sidebar d-none d-lg-flex flex-column">
-      <div class="p-3 d-flex align-items-center gap-2">
-        <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
-          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0d6efd"/><stop offset="1" stop-color="#198754"/></linearGradient></defs>
-          <rect x="2" y="2" width="28" height="28" rx="8" fill="url(#g)" opacity="0.2"></rect>
-          <path d="M8 16c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8" fill="url(#g)"></path>
-          <path d="M16 10v12" stroke="#0d6efd" stroke-width="2" stroke-linecap="round"></path>
-        </svg>
-        <span class="fw-semibold">SafeTravel</span>
-      </div>
-      <nav class="nav flex-column px-2">
-        <a class="nav-link" href="index.html"><i class="bi bi-house"></i> Home</a>
-        <a class="nav-link" href="safety.html"><i class="bi bi-shield-check"></i> Safety</a>
-        <a class="nav-link" href="dashboard.html"><i class="bi bi-activity"></i> Dashboard</a>
-        <a class="nav-link active" href="routes.html"><i class="bi bi-signpost-2"></i> Routes</a>
-        <div class="border-top my-2"></div>
-        <a class="nav-link" href="about.html"><i class="bi bi-info-circle"></i> About</a>
-        <a class="nav-link" href="contact.html"><i class="bi bi-people"></i> Contact</a>
-      </nav>
-      <div class="mt-auto p-3 small text-muted">
-        <button id="theme-toggle" class="btn btn-soft w-100">Toggle Theme</button>
-      </div>
-    </aside>
-    <main class="app-main">
-      <section class="container py-4">
-        <div class="card card-frost p-4">
-          <h2 class="h5 mb-3">Alternate Safe Routes</h2>
-          <form id="route-form" class="row gy-3">
-            <div class="col-md-4">
-              <label class="form-label">Origin</label>
-              <input class="form-control form-control-lg" name="origin" placeholder="Origin" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Destination</label>
-              <input class="form-control form-control-lg" name="destination" placeholder="Destination" required>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">Mode</label>
-              <select class="form-select form-select-lg" name="mode">
-                <option>DRIVING</option>
-                <option>WALKING</option>
-                <option>BICYCLING</option>
-                <option>TRANSIT</option>
-              </select>
-            </div>
-            <div class="col-md-2 d-grid">
-              <label class="form-label d-none d-md-block">&nbsp;</label>
-              <button class="btn btn-primary btn-lg" type="submit">
-                <span class="spinner-border spinner-border-sm me-2 d-none" id="route-spin"></span>
-                Find Routes
-              </button>
-            </div>
-          </form>
-        </div>
-        <div class="row g-3 mt-1">
-          <div class="col-lg-7">
-            <div id="routes-map" class="map card-glass"></div>
-          </div>
-          <div class="col-lg-5">
-            <div class="card card-frost h-100">
-              <div class="card-header bg-transparent">Options</div>
-              <div id="route-list" class="list-group list-group-flush"></div>
-              <div id="route-empty" class="p-4 text-center text-muted">No routes yet.</div>
-            </div>
-          </div>
-        </div>
-      </section>
-      <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
-        <div id="app-toast" class="toast align-items-center text-bg-dark border-0" role="alert">
-          <div class="d-flex">
-            <div class="toast-body" id="toast-body">Action completed</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-          </div>
-        </div>
-      </div>
-    </main>
-    <nav class="app-tabbar d-lg-none">
-      <a href="index.html" class="tab"><i class="bi bi-house"></i><span>Home</span></a>
-      <a href="safety.html" class="tab"><i class="bi bi-shield-check"></i><span>Safety</span></a>
-      <a href="dashboard.html" class="tab"><i class="bi bi-activity"></i><span>Live</span></a>
-      <a href="routes.html" class="tab"><i class="bi bi-signpost-2"></i><span>Routes</span></a>
-    </nav>
+<body>
+  <!-- Navbar for Safety & Routes pages -->
+<nav class="navbar navbar-dark bg-dark sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">DATS</a>
+    <ul class="navbar-nav ms-auto d-flex flex-row">
+      <li class="nav-item mx-2"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+      <li class="nav-item mx-2"><a class="nav-link" href="safety.html">Safety</a></li>
+      <li class="nav-item mx-2"><a class="nav-link" href="routes.html">Routes</a></li>
+    </ul>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/js/app.js"></script>
-  <script src="assets/js/api.js"></script>
-  <script src="assets/js/map.js"></script>
-  <script>
-  let directionsService, directionsRenderer, gmap;
-  (async function(){
-    await window.maps.ensure();
-    gmap = await window.maps.initMap('routes-map', { lat: 20, lng: 78 }, 5);
-    if (window.google && google.maps) {
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ map: gmap });
-    }
-  })();
+</nav>
 
-  const form = document.getElementById('route-form');
-  const list = document.getElementById('route-list');
-  const empty = document.getElementById('route-empty');
-  const spin = document.getElementById('route-spin');
+  <div class="container my-4">
+    <h2 class="fw-bold text-center">Route Planner</h2>
 
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    spin.classList.remove('d-none');
-    list.innerHTML = '';
-    empty.style.display = 'block';
-    try {
-      const fd = new FormData(form);
-      const query = { origin: fd.get('origin'), destination: fd.get('destination'), mode: fd.get('mode') };
-      const res = await window.api.findSafeRoutes(query);
-
-      if (!res.options?.length) {
-        empty.style.display = 'block';
-        return;
-      }
-      empty.style.display = 'none';
-
-      for (const [idx, opt] of res.options.entries()) {
-        const a = document.createElement('a');
-        a.href = '#';
-        a.className = 'list-group-item list-group-item-action py-3';
-        a.innerHTML = `<div class="d-flex justify-content-between">
-          <div><span class="badge risk-${opt.risk.toLowerCase()} me-2">${opt.risk}</span><strong>Route ${idx+1}</strong> • ${opt.summary}</div>
-          <small class="text-muted">${opt.duration} • ${opt.distance}</small>
+    <div class="card p-3 my-3">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-4">
+          <label class="form-label">Origin</label>
+          <select id="origin" class="form-select">
+            <option value="">Select Start City</option>
+            <option value="Delhi">Delhi</option>
+            <option value="Mumbai">Mumbai</option>
+            <option value="Bangalore">Bangalore</option>
+            <option value="Chennai">Chennai</option>
+            <option value="Kolkata">Kolkata</option>
+          </select>
         </div>
-        <div class="small text-muted">Advisory: ${opt.advisory}</div>`;
-        a.onclick = async (ev) => {
-          ev.preventDefault();
-          if (opt.directions && opt.directions.routes && directionsRenderer) {
-            directionsRenderer.setDirections(opt.directions);
-          } else if (directionsService && directionsRenderer) {
-            const req = { origin: query.origin, destination: query.destination, travelMode: google.maps.TravelMode[query.mode] };
-            const result = await directionsService.route(req);
-            directionsRenderer.setDirections(result);
-          } else {
-            window.app.toast('Map unavailable');
-          }
-          window.app.toast(`Showing Route ${idx+1}`);
-        };
-        list.appendChild(a);
-      }
-    } catch {
-      window.app.toast('Failed to load routes');
-    } finally {
-      spin.classList.add('d-none');
-    }
-  });
+        <div class="col-md-4">
+          <label class="form-label">Destination</label>
+          <select id="destination" class="form-select">
+            <option value="">Select End City</option>
+            <option value="Delhi">Delhi</option>
+            <option value="Mumbai">Mumbai</option>
+            <option value="Bangalore">Bangalore</option>
+            <option value="Chennai">Chennai</option>
+            <option value="Kolkata">Kolkata</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Mode</label>
+          <select id="mode" class="form-select">
+            <option value="driving">Driving</option>
+            <option value="walking">Walking</option>
+            <option value="cycling">Cycling</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-grid">
+          <label class="form-label">&nbsp;</label>
+          <button id="findRoute" class="btn btn-primary">Find</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="routeProgress" class="my-3"></div>
+    <div id="routeResults" class="row g-3"></div>
+    <div id="routeMap"></div>
+  </div>
+
+  <footer class="text-center py-3">© 2025 DATS</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const cityCoords = {
+      "Delhi":[28.6139,77.2090],
+      "Mumbai":[19.0760,72.8777],
+      "Bangalore":[12.9716,77.5946],
+      "Chennai":[13.0827,80.2707],
+      "Kolkata":[22.5726,88.3639]
+    };
+
+    const mockRoutes = {
+      "Delhi-Mumbai": {distance:1400, reason:"Highway prone to traffic jams", action:"Avoid peak hours; use NH48", alt:"Railway or Flight"},
+      "Delhi-Bangalore": {distance:1800, reason:"Construction in outskirts of Delhi", action:"Use alternate ring roads", alt:"Flight"},
+      "Mumbai-Chennai": {distance:1330, reason:"Heavy monsoon water logging", action:"Check local traffic advisories", alt:"Train"},
+      "Bangalore-Chennai": {distance:350, reason:"Moderate traffic during day", action:"Travel early morning or night", alt:"Bus"},
+      "Kolkata-Delhi": {distance:1500, reason:"Highway prone to accidents", action:"Drive cautiously, follow traffic rules", alt:"Flight"}
+    };
+
+    const routeMap = L.map('routeMap').setView([20.5937,78.9629],5);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(routeMap);
+
+    let routeLayer = null;
+    let alertLayer = L.layerGroup().addTo(routeMap);
+
+    document.getElementById('findRoute').addEventListener('click',()=>{
+      const origin = document.getElementById('origin').value;
+      const destination = document.getElementById('destination').value;
+      const mode = document.getElementById('mode').value;
+
+      if(!origin||!destination) return alert('Enter both origin and destination.');
+      if(origin===destination) return alert('Origin and destination cannot be the same.');
+
+      const progress = document.getElementById('routeProgress');
+      progress.innerHTML='<div class="progress-box">Calculating safest routes…</div>';
+
+      setTimeout(()=>{
+        progress.innerHTML='';
+        const key1 = `${origin}-${destination}`;
+        const key2 = `${destination}-${origin}`;
+        const routeInfo = mockRoutes[key1] || mockRoutes[key2] || {distance:1000, reason:"Unknown", action:"Drive carefully", alt:"None"};
+
+        // Calculate duration
+        let speed=50; if(mode==="walking") speed=5; if(mode==="cycling") speed=15;
+        const durationHours = Math.floor(routeInfo.distance/speed);
+        const durationMinutes = Math.round(((routeInfo.distance/speed)-durationHours)*60);
+        const duration = `${durationHours} hr ${durationMinutes} min`;
+
+        // Determine risk
+        const riskLevels = ["Safe","Moderate","Risk"];
+        const risk = riskLevels[Math.floor(Math.random()*riskLevels.length)];
+        const color = risk==='Safe'?'green':risk==='Moderate'?'orange':'red';
+
+        // Show route card
+        const box = document.getElementById('routeResults');
+        box.innerHTML = `
+          <div class="col-12">
+            <div class="card route-card p-3">
+              <h5>${origin} → ${destination} (${mode.charAt(0).toUpperCase()+mode.slice(1)})</h5>
+              <p class="muted"><strong>Distance:</strong> ${routeInfo.distance} km</p>
+              <p class="muted"><strong>Duration:</strong> ${duration}</p>
+              <p class="muted"><strong>Risk Reason:</strong> ${routeInfo.reason}</p>
+              <p class="muted"><strong>Recommended Action:</strong> ${routeInfo.action}</p>
+              <p class="muted"><strong>Alternate Route:</strong> ${routeInfo.alt}</p>
+              <div class="mt-2"><span class="${risk==='Safe'?'badge-safe':risk==='Moderate'?'badge-moderate':'badge-risk'}">${risk}</span></div>
+            </div>
+          </div>
+        `;
+
+        if(routeLayer) routeMap.removeLayer(routeLayer);
+        alertLayer.clearLayers();
+
+        const latlngs=[cityCoords[origin], cityCoords[destination]];
+        routeLayer = L.polyline(latlngs, {color:color, weight:5}).addTo(routeMap);
+
+        // Markers
+        L.marker(cityCoords[origin]).addTo(alertLayer).bindPopup(origin).openPopup();
+        L.marker(cityCoords[destination]).addTo(alertLayer).bindPopup(destination);
+
+        routeMap.fitBounds(routeLayer.getBounds(), {padding:[50,50]});
+      },500);
+    });
   </script>
 </body>
 </html>

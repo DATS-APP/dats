@@ -1,100 +1,179 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SafeTravel — Home</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DATS — Home</title>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><text y=%2224%22 font-size=%2232%22>☁️</text></svg>">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link href="assets/css/app.css" rel="stylesheet">
+  <style>
+    /* Softer hero background */
+    .hero {
+      background-color: #1f3c5a;
+      color: #f5f5f5;
+      padding: 60px 0;
+    }
+    .hero .btn-primary {
+      background-color: #4a90e2;
+      border-color: #4a90e2;
+    }
+    .hero .btn-outline-light {
+      color: #f5f5f5;
+      border-color: #f5f5f5;
+    }
+    .hero img {
+      max-width: 100%;
+      border-radius: 15px;
+    }
+    .small-muted { color: #cfcfcf; }
+    .card-frost {
+      background-color: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      color: #f5f5f5;
+    }
+    a.link-primary {
+      color: #4a90e2;
+    }
+    a.link-primary:hover { text-decoration: underline; }
+
+    /* Slideshow */
+    #hero-slideshow img {
+      width: 100%;
+      height: auto;
+      border-radius: 15px;
+      display: none;
+    }
+    #hero-slideshow img.active { display: block; }
+  </style>
 </head>
-<body class="app-bg">
-  <div class="app-layout">
-    <aside class="app-sidebar d-none d-lg-flex flex-column">
-      <div class="p-3 d-flex align-items-center gap-2">
-        <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
-          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0d6efd"/><stop offset="1" stop-color="#198754"/></linearGradient></defs>
-          <rect x="2" y="2" width="28" height="28" rx="8" fill="url(#g)" opacity="0.2"></rect>
-          <path d="M8 16c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8" fill="url(#g)"></path>
-          <path d="M16 10v12" stroke="#0d6efd" stroke-width="2" stroke-linecap="round"></path>
-        </svg>
-        <span class="fw-semibold">SafeTravel</span>
-      </div>
-      <nav class="nav flex-column px-2">
-        <a class="nav-link active" href="index.html"><i class="bi bi-house"></i> Home</a>
-        <a class="nav-link" href="safety.html"><i class="bi bi-shield-check"></i> Safety</a>
-        <a class="nav-link" href="dashboard.html"><i class="bi bi-activity"></i> Dashboard</a>
-        <a class="nav-link" href="routes.html"><i class="bi bi-signpost-2"></i> Routes</a>
-        <div class="border-top my-2"></div>
-        <a class="nav-link" href="about.html"><i class="bi bi-info-circle"></i> About</a>
-        <a class="nav-link" href="contact.html"><i class="bi bi-people"></i> Contact</a>
-      </nav>
-      <div class="mt-auto p-3 small text-muted">
-        <button id="theme-toggle" class="btn btn-soft w-100">Toggle Theme</button>
-      </div>
-    </aside>
-    <main class="app-main">
-      <section class="container py-4">
-        <div class="hero card-glass gradient-1 p-4 p-lg-5">
-          <div class="row g-4 align-items-center">
-            <div class="col-lg-6">
-              <h1 class="display-6 fw-700 mb-2">Travel smart. Stay safe.</h1>
-              <p class="lead mb-4">Check destination risk, track live alerts, and get safer routes in one place.</p>
-              <div class="d-flex gap-2 flex-wrap">
-                <a href="safety.html" class="btn btn-primary btn-lg">Check Safety</a>
-                <a href="dashboard.html" class="btn btn-soft btn-lg">Live Dashboard</a>
-              </div>
-              <div class="mt-3 small text-muted">Spring Boot • MySQL • Maps • Alerts</div>
-            </div>
-            <div class="col-lg-6">
-              <div class="preview card-frost p-3">
-                <div class="skeleton map-skeleton rounded-4"></div>
-              </div>
-            </div>
+<body>
+  <!-- Navbar: always visible -->
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">DATS</a>
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="safety.html">Safety</a></li>
+        <li class="nav-item"><a class="nav-link" href="routes.html">Routes</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-7">
+          <h1 class="display-5 fw-bold">Disaster-Aware Travel Advisory System</h1>
+          <p class="lead">Real-time disaster alerts, risk checks and safer route suggestions, all in one place. Travel smarter, safer, faster.</p>
+          <div class="mt-3">
+            <a href="dashboard.html" class="btn btn-primary btn-lg me-2">Open Dashboard</a>
+            <a href="safety.html" class="btn btn-outline-light btn-lg">Check Safety</a>
           </div>
+          <div class="mt-4 small-muted">Tip: Explore Safety & Routes pages for cities and alerts.</div>
         </div>
-        <div class="row g-4 mt-1">
-          <div class="col-md-4">
-            <div class="card card-frost h-100 p-4">
-              <div class="icon-badge bg-success-subtle text-success"><i class="bi bi-shield-check"></i></div>
-              <h5 class="mt-3">Destination risk</h5>
-              <p class="text-muted mb-0">Get a clear Safe / Moderate / High risk label with context.</p>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card card-frost h-100 p-4">
-              <div class="icon-badge bg-warning-subtle text-warning"><i class="bi bi-broadcast"></i></div>
-              <h5 class="mt-3">Real‑time alerts</h5>
-              <p class="text-muted mb-0">See live disaster reports on an interactive map and feed.</p>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card card-frost h-100 p-4">
-              <div class="icon-badge bg-primary-subtle text-primary"><i class="bi bi-signpost-2"></i></div>
-              <h5 class="mt-3">Safer routes</h5>
-              <p class="text-muted mb-0">Alternatives away from incidents with concise advisories.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
-        <div id="app-toast" class="toast align-items-center text-bg-dark border-0" role="alert">
-          <div class="d-flex">
-            <div class="toast-body" id="toast-body">Action completed</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-          </div>
+        <div class="col-md-5" id="hero-slideshow">
+          <img src="assets/images/travel1.jpg" class="active" alt="Travel Safety 1">
+          <img src="assets/images/travel2.jpg" alt="Travel Safety 2">
+          <img src="assets/images/travel3.jpg" alt="Travel Safety 3">
         </div>
       </div>
-    </main>
-    <nav class="app-tabbar d-lg-none">
-      <a href="index.html" class="tab"><i class="bi bi-house"></i><span>Home</span></a>
-      <a href="safety.html" class="tab"><i class="bi bi-shield-check"></i><span>Safety</span></a>
-      <a href="dashboard.html" class="tab"><i class="bi bi-activity"></i><span>Live</span></a>
-      <a href="routes.html" class="tab"><i class="bi bi-signpost-2"></i><span>Routes</span></a>
-    </nav>
+    </div>
+  </section>
+
+  <!-- How DATS Works -->
+  <section class="container my-5">
+    <h3 class="fw-bold text-center mb-4">How DATS Works</h3>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="card p-3">
+          <h5>1. Data Collection</h5>
+          <p class="muted">DATS collects disaster alerts and safety feeds from official sources (mocked in demo).</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-3">
+          <h5>2. Risk Evaluation</h5>
+          <p class="muted">It checks destination coordinates and evaluates risk level (Safe, Moderate, High).</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-3">
+          <h5>3. Safer Routes</h5>
+          <p class="muted">If a route is affected by an alert, DATS suggests alternate safer options.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Travel Tips & Safe Destinations -->
+  <section class="container my-4">
+    <h4 class="fw-bold text-center mb-3">Travel Smarter & Safer</h4>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card p-3 h-100">
+          <h5>Travel Tips During Disasters</h5>
+          <ul>
+            <li>Carry an emergency kit including water, snacks, and first aid.</li>
+            <li>Avoid low-lying areas prone to floods.</li>
+            <li>Check weather & road conditions before starting your journey.</li>
+            <li>Prefer safer routes over shorter ones if conditions are risky.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card p-3 h-100">
+          <h5>Nearby Safe Destinations</h5>
+          <ul class="list-unstyled">
+            <li>Community Shelter A - 2 km away</li>
+            <li>City Hospital - 3 km away</li>
+            <li>Central Park High Ground - 5 km away</li>
+          </ul>
+          <a class="btn btn-sm btn-primary mt-2" href="routes.html">View Routes</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mini Dashboard Map Preview -->
+  <section class="container my-4">
+    <h4 class="fw-bold mb-3">Live Alerts Preview</h4>
+    <div id="home-map" style="height:260px; border-radius:10px; overflow:hidden;"></div>
+  </section>
+
+  <!-- Footer -->
+<footer class="bg-dark text-light py-4 mt-5">
+  <div class="container text-center">
+    <h5>DATS — Travel safer</h5>
+    <p>Email: support@datsapp.com | Phone: +91-1234567890</p>
+    <p class="small">&copy; 2025 DATS APP. All rights reserved.</p>
   </div>
+</footer>
+
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="assets/js/app.js"></script>
+  <script src="assets/js/map.js"></script>
+  <script>
+    // Hero slideshow
+    let slideIndex = 0;
+    const slides = document.querySelectorAll("#hero-slideshow img");
+    function showSlides() {
+      slides.forEach(img => img.classList.remove("active"));
+      slideIndex = (slideIndex+1) % slides.length;
+      slides[slideIndex].classList.add("active");
+    }
+    setInterval(showSlides, 4000); // change every 4 seconds
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      datsMap.init('home-map',[20.5937,78.9629],5);
+      const alerts = await window.apiFetch.getAlerts();
+      datsMap.addAlertMarkers(alerts);
+    });
+  </script>
 </body>
 </html>

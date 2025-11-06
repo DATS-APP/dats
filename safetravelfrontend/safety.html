@@ -1,163 +1,150 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SafeTravel — Safety</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DATS — Safety</title>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><text y=%2224%22 font-size=%2232%22>☁️</text></svg>">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link href="assets/css/app.css" rel="stylesheet">
+  <style>
+    #safetyMap { height: 450px; border-radius:10px; margin-top:20px; }
+    .badge-safe { background-color: #28a745; color: #fff; }
+    .badge-moderate { background-color: #ffc107; color: #000; }
+    .badge-risk { background-color: #dc3545; color: #fff; }
+    .alert-card { cursor: pointer; transition:0.2s; }
+    .alert-card:hover { transform: scale(1.02); }
+  </style>
 </head>
-<body class="app-bg">
-  <div class="app-layout">
-    <aside class="app-sidebar d-none d-lg-flex flex-column">
-      <div class="p-3 d-flex align-items-center gap-2">
-        <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
-          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0d6efd"/><stop offset="1" stop-color="#198754"/></linearGradient></defs>
-          <rect x="2" y="2" width="28" height="28" rx="8" fill="url(#g)" opacity="0.2"></rect>
-          <path d="M8 16c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8" fill="url(#g)"></path>
-          <path d="M16 10v12" stroke="#0d6efd" stroke-width="2" stroke-linecap="round"></path>
-        </svg>
-        <span class="fw-semibold">SafeTravel</span>
-      </div>
-      <nav class="nav flex-column px-2">
-        <a class="nav-link" href="index.html"><i class="bi bi-house"></i> Home</a>
-        <a class="nav-link active" href="safety.html"><i class="bi bi-shield-check"></i> Safety</a>
-        <a class="nav-link" href="dashboard.html"><i class="bi bi-activity"></i> Dashboard</a>
-        <a class="nav-link" href="routes.html"><i class="bi bi-signpost-2"></i> Routes</a>
-        <div class="border-top my-2"></div>
-        <a class="nav-link" href="about.html"><i class="bi bi-info-circle"></i> About</a>
-        <a class="nav-link" href="contact.html"><i class="bi bi-people"></i> Contact</a>
-      </nav>
-      <div class="mt-auto p-3 small text-muted">
-        <button id="theme-toggle" class="btn btn-soft w-100">Toggle Theme</button>
-      </div>
-    </aside>
-    <main class="app-main">
-      <section class="container py-4">
-        <div class="card card-frost p-4">
-          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <h2 class="h4 mb-0">Destination Safety Check</h2>
-            <div class="d-flex gap-2">
-              <button class="btn btn-soft btn-sm" id="use-location"><i class="bi bi-geo-alt"></i> Use my location</button>
-              <button class="btn btn-soft btn-sm" id="clear-form"><i class="bi bi-x-circle"></i> Clear</button>
-            </div>
-          </div>
-          <form id="safety-form" class="row gy-3 mt-2">
-            <div class="col-md-5">
-              <label class="form-label">Destination</label>
-              <input class="form-control form-control-lg" name="destination" placeholder="City, Country" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Travel date</label>
-              <input type="date" class="form-control form-control-lg" name="date" required>
-            </div>
-            <div class="col-md-3 d-grid">
-              <label class="form-label d-none d-md-block">&nbsp;</label>
-              <button class="btn btn-primary btn-lg" type="submit">
-                <span class="spinner-border spinner-border-sm me-2 d-none" id="safety-spin"></span>
-                Check Safety
-              </button>
-            </div>
-          </form>
-        </div>
-        <div id="safety-result" class="mt-4 d-none">
-          <div class="card card-glass p-0 overflow-hidden">
-            <div class="p-4 d-flex justify-content-between align-items-center">
-              <div>
-                <div class="badge rounded-pill px-3 py-2" id="risk-badge">Unknown</div>
-                <h5 class="mt-2 mb-1" id="risk-title">Risk: —</h5>
-                <p class="text-muted mb-0" id="risk-desc">—</p>
-              </div>
-              <div class="text-end small text-muted">
-                <div id="risk-location">—</div>
-                <div id="risk-updated">—</div>
-              </div>
-            </div>
-            <div class="border-top p-4">
-              <h6 class="mb-3">Recent alerts</h6>
-              <ul id="alerts-list" class="list-group list-group-flush rounded-3"></ul>
-              <div id="alerts-empty" class="text-muted small d-none">No recent alerts.</div>
-            </div>
-          </div>
-        </div>
-      </section>
-      <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
-        <div id="app-toast" class="toast align-items-center text-bg-dark border-0" role="alert">
-          <div class="d-flex">
-            <div class="toast-body" id="toast-body">Action completed</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-          </div>
-        </div>
-      </div>
-    </main>
-    <nav class="app-tabbar d-lg-none">
-      <a href="index.html" class="tab"><i class="bi bi-house"></i><span>Home</span></a>
-      <a href="safety.html" class="tab"><i class="bi bi-shield-check"></i><span>Safety</span></a>
-      <a href="dashboard.html" class="tab"><i class="bi bi-activity"></i><span>Live</span></a>
-      <a href="routes.html" class="tab"><i class="bi bi-signpost-2"></i><span>Routes</span></a>
-    </nav>
+<body>
+  <!-- Navbar for Safety & Routes pages -->
+<nav class="navbar navbar-dark bg-dark sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">DATS</a>
+    <ul class="navbar-nav ms-auto d-flex flex-row">
+      <li class="nav-item mx-2"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+      <li class="nav-item mx-2"><a class="nav-link" href="safety.html">Safety</a></li>
+      <li class="nav-item mx-2"><a class="nav-link" href="routes.html">Routes</a></li>
+    </ul>
   </div>
+</nav>
+
+  <div class="container my-4">
+    <h2 class="fw-bold text-center">Safety Checker</h2>
+
+    <div class="card p-3 my-3">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-6">
+          <label class="form-label">Select City</label>
+          <select id="citySelect" class="form-select">
+            <option value="">Choose a city</option>
+            <option value="Delhi">Delhi</option>
+            <option value="Mumbai">Mumbai</option>
+            <option value="Bangalore">Bangalore</option>
+            <option value="Chennai">Chennai</option>
+            <option value="Kolkata">Kolkata</option>
+          </select>
+        </div>
+        <div class="col-md-6 d-grid">
+          <label class="form-label">&nbsp;</label>
+          <button id="checkSafety" class="btn btn-primary">Check Safety</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="safetyProgress" class="my-3"></div>
+    <div id="alertList" class="row g-3"></div>
+    <div id="safetyMap"></div>
+  </div>
+
+  <footer class="text-center py-3">© 2025 DATS</footer>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/js/app.js"></script>
-  <script src="assets/js/api.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-  const form = document.getElementById('safety-form');
-  const spin = document.getElementById('safety-spin');
-  const box  = document.getElementById('safety-result');
-  const badge= document.getElementById('risk-badge');
-  const title= document.getElementById('risk-title');
-  const desc = document.getElementById('risk-desc');
-  const loc  = document.getElementById('risk-location');
-  const upd  = document.getElementById('risk-updated');
-  const list = document.getElementById('alerts-list');
-  const empty= document.getElementById('alerts-empty');
+    const cityCoords = {
+      "Delhi":[28.6139,77.2090],
+      "Mumbai":[19.0760,72.8777],
+      "Bangalore":[12.9716,77.5946],
+      "Chennai":[13.0827,80.2707],
+      "Kolkata":[22.5726,88.3639]
+    };
 
-  document.getElementById('clear-form').onclick = () => { form.reset(); box.classList.add('d-none'); };
-  document.getElementById('use-location').onclick = async () => {
-    try {
-      const pos = await window.app.getLocation();
-      form.destination.value = `${pos.coords.latitude.toFixed(3)}, ${pos.coords.longitude.toFixed(3)}`;
-    } catch {}
-  };
+    const mockAlerts = {
+      "Delhi":[
+        {name:"Flood Warning", severity:"Risk", coords:[28.65,77.20], cause:"Heavy rain causing water logging in low areas", action:"Avoid low-lying areas; follow traffic advisories."},
+        {name:"Air Pollution", severity:"Moderate", coords:[28.61,77.21], cause:"High PM2.5 levels", action:"Limit outdoor activities; wear masks."}
+      ],
+      "Mumbai":[
+        {name:"Storm Alert", severity:"Moderate", coords:[19.07,72.88], cause:"Thunderstorms predicted", action:"Stay indoors; avoid coastal areas."},
+        {name:"Water Logging", severity:"Risk", coords:[19.08,72.87], cause:"Heavy rain in low-lying areas", action:"Avoid streets near rivers; use alternate routes."}
+      ],
+      "Bangalore":[
+        {name:"Traffic Delay", severity:"Moderate", coords:[12.97,77.59], cause:"Construction work on main roads", action:"Use alternate routes; expect delays."}
+      ],
+      "Chennai":[
+        {name:"Heat Wave", severity:"Moderate", coords:[13.08,80.27], cause:"Temperature above 40°C", action:"Stay hydrated; avoid direct sun exposure."}
+      ],
+      "Kolkata":[
+        {name:"Cyclone Warning", severity:"Risk", coords:[22.57,88.36], cause:"Cyclone approaching coast", action:"Follow evacuation orders; avoid traveling."}
+      ]
+    };
 
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    spin.classList.remove('d-none');
-    try {
-      const fd = new FormData(form);
-      const payload = { destination: fd.get('destination'), date: fd.get('date') };
-      const res = await window.api.checkSafety(payload);
-      const palette = { Safe:'bg-success text-white', Moderate:'bg-warning text-dark', High:'bg-danger text-white' }[res.risk] || 'bg-secondary';
+    const safetyMap = L.map('safetyMap').setView([20.5937,78.9629],5);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(safetyMap);
 
-      badge.className = 'badge rounded-pill px-3 py-2 ' + palette;
-      badge.textContent = res.risk;
-      title.textContent = 'Risk: ' + res.risk;
-      desc.textContent = res.description;
-      loc.textContent = payload.destination;
-      upd.textContent = 'Updated: ' + new Date().toLocaleString();
+    let alertLayer = L.layerGroup().addTo(safetyMap);
 
-      list.innerHTML = '';
-      if (!res.recentAlerts?.length) {
-        empty.classList.remove('d-none');
-      } else {
-        empty.classList.add('d-none');
-        res.recentAlerts.forEach(a=>{
-          const li = document.createElement('li');
-          li.className = 'list-group-item d-flex justify-content-between align-items-center';
-          li.innerHTML = `<span><i class="bi bi-exclamation-triangle me-2"></i>${a.type} • ${a.severity}</span><small class="text-muted">${a.when}</small>`;
-          list.appendChild(li);
+    document.getElementById('checkSafety').addEventListener('click',()=>{
+      const city = document.getElementById('citySelect').value;
+      if(!city) return alert('Please select a city.');
+
+      const progress = document.getElementById('safetyProgress');
+      progress.innerHTML='<div class="progress-box">Fetching safety alerts…</div>';
+
+      setTimeout(()=>{
+        progress.innerHTML='';
+        alertLayer.clearLayers();
+        const alerts = mockAlerts[city] || [];
+
+        const alertListDiv = document.getElementById('alertList');
+        alertListDiv.innerHTML='';
+
+        alerts.forEach(alert=>{
+          const color = alert.severity==='Safe'?'green':alert.severity==='Moderate'?'orange':'red';
+
+          // Add marker
+          const marker = L.circleMarker(alert.coords,{
+            radius:8,color:color,fillColor:color,fillOpacity:0.7
+          }).addTo(alertLayer);
+
+          // Bind popup with detailed info
+          marker.bindPopup(`<strong>${alert.name}</strong><br>
+                            Severity: ${alert.severity}<br>
+                            Cause: ${alert.cause}<br>
+                            Recommended: ${alert.action}`);
+
+          // Add card to list
+          const card = document.createElement('div');
+          card.className='col-12 col-md-6';
+          card.innerHTML=`<div class="card alert-card p-3">
+                            <h6>${alert.name} <span class="${alert.severity==='Safe'?'badge-safe':alert.severity==='Moderate'?'badge-moderate':'badge-risk'}">${alert.severity}</span></h6>
+                            <p class="muted"><strong>Cause:</strong> ${alert.cause}</p>
+                            <p class="muted"><strong>Recommended:</strong> ${alert.action}</p>
+                          </div>`;
+          alertListDiv.appendChild(card);
+
+          // Click card zooms map to marker
+          card.querySelector('div').addEventListener('click',()=>{safetyMap.setView(alert.coords,13); marker.openPopup();});
         });
-      }
-      box.classList.remove('d-none');
-      window.app.toast('Safety results updated');
-    } catch {
-      window.app.toast('Failed to fetch safety info');
-    } finally {
-      spin.classList.add('d-none');
-    }
-  });
+
+        // Center map on city
+        safetyMap.setView(cityCoords[city], 12);
+        L.marker(cityCoords[city]).addTo(alertLayer).bindPopup(`<strong>${city}</strong>`).openPopup();
+      },500);
+    });
   </script>
 </body>
 </html>

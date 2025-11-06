@@ -1,58 +1,47 @@
-// Google Maps loader and helpers with graceful fallback.
-window.maps = (function(){
-  let map, markers = [];
-  const loadScript = () => new Promise((resolve, reject)=>{
-    if (window.google && window.google.maps) return resolve();
-    const key = window.GOOGLE_MAPS_KEY || 'YOUR_API_KEY';
-    const s = document.createElement('script');
-    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + key;
-    s.async = true; s.onload = resolve; s.onerror = reject;
-    document.head.appendChild(s);
-  });
+// map.js - lightweight map helper (Leaflet)
+window.datsMap = (function(){
+  let mapInstance = null;
+  let markers = [];
 
-  const iconFor = (type) => {
-    const colors = { Earthquake:'#dc3545', Flood:'#0d6efd', Cyclone:'#6f42c1', Wildfire:'#fd7e14' };
-    const color = colors[type] || '#0d6efd';
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><circle cx="14" cy="14" r="10" fill="${color}" fill-opacity="0.18"/><circle cx="14" cy="14" r="6" fill="${color}"/></svg>`;
-    return () => {
-      if (!window.google || !google.maps) return null;
-      return { url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg), scaledSize: new google.maps.Size(28,28) };
-    };
-  };
-
-  async function ensure(){ try { await loadScript(); } catch { console.warn('Maps failed to load'); } }
-
-  async function initMap(elId, center, zoom){
+  function init(elId='map', center=[20.5937,78.9629], zoom=5) {
     const el = document.getElementById(elId);
-    if (!(window.google && window.google.maps)) {
-      el.innerHTML = '<div class="p-4 text-center text-muted">Map unavailable (API key missing).</div>';
-      el.classList.add('d-flex','align-items-center','justify-content-center');
-      return null;
-    }
-    map = new google.maps.Map(el, { center, zoom, mapId: 'bf8d1b1b2c4d1a12' });
-    return map;
+    if (!el) return null;
+    // if already init, return
+    if (mapInstance) { mapInstance.invalidateSize(); return mapInstance; }
+
+    mapInstance = L.map(elId).setView(center, zoom);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom: 18,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(mapInstance);
+    return mapInstance;
   }
 
-  function setMarkers(items){
+  function clearMarkers() {
+    markers.forEach(m => m.remove());
+    markers = [];
+  }
+
+  function addAlertMarkers(alerts) {
+    if (!mapInstance) return;
     clearMarkers();
-    if (!(window.google && window.google.maps && map)) return;
-    items.forEach(it=>{
-      const iconFactory = typeof it.icon === 'function' ? it.icon : null;
-      const icon = iconFactory ? iconFactory() : undefined;
-      const m = new google.maps.Marker({ position: it.position, map, title: it.title, icon });
-      markers.push(m);
+    alerts.forEach(a => {
+      const color = a.severity === 'High' ? '#ff6b6b' : a.severity === 'Moderate' ? '#ffb86b' : '#7ee7a6';
+      const marker = L.circleMarker([a.lat, a.lon], {
+        radius: 8, fillColor: color, color: color, fillOpacity:0.9
+      }).addTo(mapInstance);
+      marker.bindPopup(`<b>${a.type}</b><br>${a.message}<br><small class="muted">Severity: ${a.severity}</small>`);
+      markers.push(marker);
     });
   }
-  function clearMarkers(){ markers.forEach(m => m.setMap(null)); markers = []; }
 
-  return {
-    ensure,
-    initMap,
-    setMarkers,
-    clearMarkers,
-    iconFor: (type) => {
-      const f = iconFor(type);
-      return f();
-    }
-  };
+  function addMarker(lat, lon, label) {
+    if (!mapInstance) return;
+    const m = L.marker([lat, lon]).addTo(mapInstance);
+    if (label) m.bindPopup(label).openPopup();
+    markers.push(m);
+    mapInstance.setView([lat, lon], Math.max(mapInstance.getZoom(), 8));
+  }
+
+  return { init, addAlertMarkers, addMarker, clearMarkers, mapInstance: () => mapInstance };
 })();

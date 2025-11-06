@@ -1,128 +1,114 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SafeTravel — Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DATS — Dashboard</title>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><text y=%2224%22 font-size=%2232%22>☁️</text></svg>">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link href="assets/css/app.css" rel="stylesheet">
+  <style>
+    #dashboardMap { height: 450px; border-radius:10px; margin-top:20px; }
+    .badge-safe { background-color: #28a745; color: #fff; }
+    .badge-moderate { background-color: #ffc107; color: #000; }
+    .badge-risk { background-color: #dc3545; color: #fff; }
+    .alert-card:hover { transform: scale(1.02); transition:0.2s; }
+    .modal-content { color: #000; }
+  </style>
 </head>
-<body class="app-bg">
-  <div class="app-layout">
-    <aside class="app-sidebar d-none d-lg-flex flex-column">
-      <div class="p-3 d-flex align-items-center gap-2">
-        <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
-          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0d6efd"/><stop offset="1" stop-color="#198754"/></linearGradient></defs>
-          <rect x="2" y="2" width="28" height="28" rx="8" fill="url(#g)" opacity="0.2"></rect>
-          <path d="M8 16c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8" fill="url(#g)"></path>
-          <path d="M16 10v12" stroke="#0d6efd" stroke-width="2" stroke-linecap="round"></path>
-        </svg>
-        <span class="fw-semibold">SafeTravel</span>
-      </div>
-      <nav class="nav flex-column px-2">
-        <a class="nav-link" href="index.html"><i class="bi bi-house"></i> Home</a>
-        <a class="nav-link" href="safety.html"><i class="bi bi-shield-check"></i> Safety</a>
-        <a class="nav-link active" href="dashboard.html"><i class="bi bi-activity"></i> Dashboard</a>
-        <a class="nav-link" href="routes.html"><i class="bi bi-signpost-2"></i> Routes</a>
-        <div class="border-top my-2"></div>
-        <a class="nav-link" href="about.html"><i class="bi bi-info-circle"></i> About</a>
-        <a class="nav-link" href="contact.html"><i class="bi bi-people"></i> Contact</a>
-      </nav>
-      <div class="mt-auto p-3 small text-muted">
-        <button id="theme-toggle" class="btn btn-soft w-100">Toggle Theme</button>
-      </div>
-    </aside>
-    <main class="app-main">
-      <section class="container-fluid py-3">
-        <div class="row g-3">
-          <div class="col-lg-8">
-            <div class="card card-glass">
-              <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                  <i class="bi bi-activity"></i>
-                  <span>Live Disaster Map</span>
-                </div>
-                <div class="d-flex gap-2">
-                  <select id="layer" class="form-select form-select-sm">
-                    <option value="all">All</option>
-                    <option value="flood">Floods</option>
-                    <option value="cyclone">Cyclones</option>
-                    <option value="earthquake">Earthquakes</option>
-                    <option value="wildfire">Wildfires</option>
-                  </select>
-                  <button id="refresh" class="btn btn-soft btn-sm"><i class="bi bi-arrow-clockwise"></i></button>
-                </div>
-              </div>
-              <div class="card-body p-0">
-                <div id="map" class="map"></div>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4">
-            <div class="card card-frost h-100">
-              <div class="card-header bg-transparent">Live Alerts</div>
-              <div class="card-body p-0">
-                <ul id="feed" class="list-group list-group-flush small"></ul>
-                <div id="feed-empty" class="p-4 text-center text-muted">No alerts for this filter.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
-        <div id="app-toast" class="toast align-items-center text-bg-dark border-0" role="alert">
-          <div class="d-flex">
-            <div class="toast-body" id="toast-body">Action completed</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-          </div>
-        </div>
-      </div>
-    </main>
-    <nav class="app-tabbar d-lg-none">
-      <a href="index.html" class="tab"><i class="bi bi-house"></i><span>Home</span></a>
-      <a href="safety.html" class="tab"><i class="bi bi-shield-check"></i><span>Safety</span></a>
-      <a href="dashboard.html" class="tab"><i class="bi bi-activity"></i><span>Live</span></a>
-      <a href="routes.html" class="tab"><i class="bi bi-signpost-2"></i><span>Routes</span></a>
-    </nav>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">DATS</a>
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="safety.html">Safety</a></li>
+        <li class="nav-item"><a class="nav-link" href="routes.html">Routes</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <h2 class="fw-bold text-center">Dashboard</h2>
+
+    <!-- Live Alerts Section -->
+    <div class="card p-3 my-3">
+      <h5>Live Alerts (City & Severity)</h5>
+      <div id="live-alerts-dashboard" class="row g-3"></div>
+    </div>
+
+    <!-- Map -->
+    <div id="dashboardMap"></div>
   </div>
+
+  <!-- Alert Modal -->
+  <div class="modal fade" id="dashboardAlertModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content p-3">
+        <h5 class="fw-bold" id="dash-modal-alert-name">Alert Name</h5>
+        <p><strong>Severity:</strong> <span id="dash-modal-alert-severity"></span></p>
+        <p><strong>Location:</strong> <span id="dash-modal-alert-location"></span></p>
+        <p id="dash-modal-alert-description">Suggested action / description goes here.</p>
+        <button class="btn btn-dark" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden alert template -->
+  <div id="alert-card-template-dashboard" class="col-md-4" style="display:none;">
+    <div class="card p-3 alert-card h-100">
+      <h6 class="alert-name fw-bold"></h6>
+      <p class="muted"><span class="alert-severity"></span></p>
+      <button class="btn btn-sm btn-primary more-info-btn" data-bs-toggle="modal" data-bs-target="#dashboardAlertModal">More Info</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center py-3">© 2025 DATS</footer>
+
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/js/app.js"></script>
-  <script src="assets/js/api.js"></script>
-  <script src="assets/js/map.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-  (async function(){
-    await window.maps.ensure();
-    await window.maps.initMap('map', { lat: 20.5937, lng: 78.9629 }, 5);
-    const layerSel = document.getElementById('layer');
-    const feed = document.getElementById('feed');
-    const empty = document.getElementById('feed-empty');
-    const load = async () => {
-      const layer = layerSel.value;
-      const alerts = await window.api.getLiveAlerts(layer);
-      window.maps.setMarkers(alerts.map(a => ({
-        position: { lat: a.lat, lng: a.lng },
-        title: `${a.type} • ${a.severity}`,
-        icon: window.maps.iconFor(a.type)
-      })));
-      feed.innerHTML = '';
-      if (!alerts.length) {
-        empty.style.display = 'block';
-      } else {
-        empty.style.display = 'none';
-        alerts.forEach(a=>{
-          const li = document.createElement('li');
-          li.className = 'list-group-item d-flex justify-content-between align-items-center';
-          li.innerHTML = `<span><span class="dot ${a.type.toLowerCase()}"></span>${a.type} • ${a.severity}</span><small class="text-muted">${new Date(a.time).toLocaleString()}</small>`;
-          feed.appendChild(li);
-        });
-      }
-    };
-    document.getElementById('refresh').onclick = load;
-    layerSel.onchange = load;
-    load();
-  })();
+    const liveAlerts = [
+      { name:"Flood Warning", severity:"Risk", coords:[28.65,77.20], location:"Delhi", description:"Avoid low-lying areas. Follow official evacuation instructions." },
+      { name:"Storm Alert", severity:"Moderate", coords:[19.07,72.88], location:"Mumbai", description:"Travel may be delayed. Take caution while commuting." },
+      { name:"Traffic Delay", severity:"Moderate", coords:[12.97,77.59], location:"Bangalore", description:"Heavy traffic reported. Consider alternate routes." },
+      { name:"Heat Wave", severity:"Moderate", coords:[13.08,80.27], location:"Chennai", description:"Stay hydrated and avoid outdoor travel during peak hours." },
+      { name:"Cyclone Warning", severity:"Risk", coords:[22.57,88.36], location:"Kolkata", description:"Seek shelter and avoid coastal regions until warning is lifted." }
+    ];
+
+    const dashboardMap = L.map('dashboardMap').setView([20.5937,78.9629],5);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(dashboardMap);
+    let alertLayer = L.layerGroup().addTo(dashboardMap);
+
+    const container = document.getElementById('live-alerts-dashboard');
+    const template = document.getElementById('alert-card-template-dashboard');
+
+    liveAlerts.forEach(alert => {
+      const card = template.cloneNode(true);
+      card.style.display = 'block';
+      card.querySelector('.alert-name').textContent = alert.name + " — " + alert.location;
+      card.querySelector('.alert-severity').textContent = alert.severity;
+
+      const btn = card.querySelector('.more-info-btn');
+      btn.addEventListener('click', () => {
+        document.getElementById('dash-modal-alert-name').textContent = alert.name;
+        document.getElementById('dash-modal-alert-severity').textContent = alert.severity;
+        document.getElementById('dash-modal-alert-location').textContent = alert.location;
+        document.getElementById('dash-modal-alert-description').textContent = alert.description;
+      });
+
+      container.appendChild(card);
+
+      const color = alert.severity === "Safe" ? "green" : alert.severity === "Moderate" ? "orange" : "red";
+      L.circleMarker(alert.coords, { radius:8, color:color, fillColor:color, fillOpacity:0.7 })
+        .addTo(alertLayer)
+        .bindPopup(`<strong>${alert.name}</strong><br>Severity: ${alert.severity}<br>Location: ${alert.location}`);
+    });
   </script>
 </body>
 </html>
